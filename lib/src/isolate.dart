@@ -288,6 +288,11 @@ class VMIsolateRef {
         step == VMStep.resume ? {} : {"step": step._value});
   }
 
+  /// Sets the pause behaviour for exceptions.
+  Future setExceptionPauseMode(VMExceptionPauseMode mode) =>
+      _scope.sendRequest("setExceptionPauseMode", {"mode": mode._value});
+
+
   /// Sets the [name] of the isolate.
   ///
   /// Note that since this object is immutable, it needs to be reloaded to see
@@ -497,6 +502,26 @@ class VMStep {
   final String _value;
 
   const VMStep._(this._value);
+
+  String toString() => _value;
+}
+
+/// An enum of exception pause behaviour for use in [VMIsolateRef.setExceptionPauseMode].
+class VMExceptionPauseMode {
+  /// The isolate will not pause on any exceptions.
+  static const none = const VMExceptionPauseMode._("None");
+
+  /// The isolate will pause on any unhandled exceptions.
+  static const unhandled = const VMExceptionPauseMode._("Unhandled");
+
+  /// The isolate will pause on all exceptions.
+  static const all = const VMExceptionPauseMode._("All");
+
+
+  /// The string name of the step type.
+  final String _value;
+
+  const VMExceptionPauseMode._(this._value);
 
   String toString() => _value;
 }
