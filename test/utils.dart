@@ -7,8 +7,10 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:async/async.dart';
+import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';
 import 'package:vm_service_client/vm_service_client.dart';
+import 'package:web_socket_channel/io.dart';
 
 final lines = new StreamTransformer(
     (Stream<List<int>> stream, bool cancelOnError) => const LineSplitter()
@@ -68,7 +70,23 @@ main() ${sync ? '' : 'async'} {
   process.stdin.writeln();
 
   var match = new RegExp('Observatory listening on (.*)').firstMatch(line);
-  var client = new VMServiceClient.connect(match[1]);
+  const debugPrint = false;
+  VMServiceClient client;
+  if (debugPrint) {
+    final Uri serviceUri = Uri.parse(match[1]).replace(scheme: 'ws', path: '/ws');
+    // Proxy the stream/sink for the VM Client so we can print it.
+    final StreamChannel<String> channel = new IOWebSocketChannel.connect(serviceUri)
+        .cast<String>()
+        .changeStream((Stream<String> stream) => stream.map((s) { print(s); return s; }))
+        .changeSink((StreamSink<String> sink) =>
+    new StreamController<String>()
+        ..stream.listen((String s) {print(s); sink.add(s); }));
+    client = new VMServiceClient(channel);
+  }
+  else {
+    client = new VMServiceClient.connect(match[1]);
+  }
+
   client.done.then((_) => process.kill());
 
   // Drain the rest of the stdout queue. Otherwise the stdout and stderr streams
