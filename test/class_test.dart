@@ -34,8 +34,8 @@ void main() {
     expect(klass.error, isNull);
     expect(klass.isAbstract, isFalse);
     expect(klass.isConst, isFalse);
-    expect(klass.library.uri.scheme, equals("data"));
-    expect(klass.location.script.uri.scheme, equals("data"));
+    expect(klass.library.uri.scheme, equals("file"));
+    expect(klass.location.script.uri.scheme, equals("file"));
     expect(klass.superclass.name, equals("Object"));
     expect(klass.interfaces.single.name, equals("Comparable"));
     expect(klass.fields, contains("value"));

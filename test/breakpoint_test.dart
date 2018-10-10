@@ -35,7 +35,7 @@ void main() {
     expect(breakpoint.number, equals(1));
     expect(breakpoint, isNot(new TypeMatcher<VMResolvedBreakpoint>()));
     expect(breakpoint.location, new TypeMatcher<VMUnresolvedSourceLocation>());
-    expect(breakpoint.location.uri.scheme, equals('data'));
+    expect(breakpoint.location.uri.scheme, equals('file'));
     expect(breakpoint.toString(), startsWith("breakpoint #1 in data:"));
 
     await isolate.resume();
@@ -50,7 +50,7 @@ void main() {
     expect(breakpoint.number, equals(1));
     expect(breakpoint, new TypeMatcher<VMResolvedBreakpoint>());
     expect(breakpoint.location, new TypeMatcher<VMSourceLocation>());
-    expect(breakpoint.location.uri.scheme, equals('data'));
+    expect(breakpoint.location.uri.scheme, equals('file'));
 
     expect(await sourceLine(breakpoint.location), equals(8));
   });
@@ -73,7 +73,7 @@ void main() {
     expect(breakpoint.number, equals(1));
     expect(breakpoint, isNot(new TypeMatcher<VMResolvedBreakpoint>()));
     expect(breakpoint.location, new TypeMatcher<VMUnresolvedSourceLocation>());
-    expect(breakpoint.location.uri.scheme, equals('data'));
+    expect(breakpoint.location.uri.scheme, equals('file'));
     expect(breakpoint.toString(), startsWith("breakpoint #1 in data:"));
 
     await breakpoint.remove();

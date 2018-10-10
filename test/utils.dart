@@ -10,6 +10,8 @@ import 'package:async/async.dart';
 import 'package:test/test.dart';
 import 'package:vm_service_client/vm_service_client.dart';
 
+const tempFolderPrefix = 'vm_service_client_test_run';
+
 final lines = new StreamTransformer(
     (Stream<List<int>> stream, bool cancelOnError) => const LineSplitter()
         .bind(utf8.decoder.bind(stream))
@@ -59,10 +61,14 @@ main() ${sync ? '' : 'async'} {
 }
 """;
 
-  var uri = "data:application/dart;charset=utf-8,${Uri.encodeFull(library)}";
+  var tempDirectory = Directory.systemTemp.createTempSync(tempFolderPrefix);
+  var tempFilePath =
+      [tempDirectory.path, 'run.dart'].join(Platform.pathSeparator);
+  new File(tempFilePath).writeAsStringSync(library);
 
   var args = flags.toList()
-    ..addAll(['--pause-isolates-on-exit', '--enable-vm-service=0', uri]);
+    ..addAll(
+        ['--pause-isolates-on-exit', '--enable-vm-service=0', tempFilePath]);
   var process = await Process.start(Platform.resolvedExecutable, args);
 
   var stdout = new StreamQueue(process.stdout.transform<String>(lines));
@@ -73,7 +79,9 @@ main() ${sync ? '' : 'async'} {
 
   var match = new RegExp('Observatory listening on (.*)').firstMatch(line);
   var client = new VMServiceClient.connect(match[1]);
-  client.done.then((_) => process.kill());
+  client.done
+      .then((_) => process.kill())
+      .then((_) => tryToDelete(tempDirectory));
 
   // Drain the rest of the stdout queue. Otherwise the stdout and stderr streams
   // won't work.
@@ -100,4 +108,16 @@ Future onlyEvent(Stream stream) {
   // Wait a bit to see if any further events are emitted.
   expect(new Future.delayed(new Duration(milliseconds: 200)), completes);
   return completer.future;
+}
+
+bool isTestScript(Uri uri) {
+  return uri.toString().contains('/$tempFolderPrefix');
+}
+
+void tryToDelete(Directory directory) {
+  try {
+    directory.deleteSync(recursive: true);
+  } catch (e) {
+    print('Failed to clean up temp directory\n  ${directory.path}\n  $e');
+  }
 }
